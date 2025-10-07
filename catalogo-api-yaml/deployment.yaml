@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api-container
+        image: patrickpk4/catalogo:v1.0
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+          name: http 
+        - containerPort: 443
+          name: https 
+        imagePullPolicy: Always
+        env:
+        - name: Mongo_host
+          value: "mongo-service"
+        - name: Mongo_User 
+          value: "mongouser"
+        - name: Mongo_password 
+          value: "mondopwd"
+        - name: Mongo__port
+          value: "27017"
+        - name: Mongo__DataBase
+          value: "admin"
