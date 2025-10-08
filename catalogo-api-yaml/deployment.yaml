@@ -24,14 +24,18 @@ spec:
         - containerPort: 443
           name: https 
         imagePullPolicy: Always
-        env:
-        - name: Mongo_host
-          value: "mongo-service"
-        - name: Mongo_User 
-          value: "mongouser"
-        - name: Mongo_password 
-          value: "mondopwd"
-        - name: Mongo__port
-          value: "27017"
-        - name: Mongo__DataBase
-          value: "admin"
+        envFrom:
+        - secretRef:
+           name: catalogo-secrete
+        env: 
+         - name: mongo_user
+           valueFrom:
+            secretKeyRef:
+               key: MONGO_INITDB_ROOT_USERNAME
+               name: mongodb-secret 
+         - name: mongo_password
+           valueFrom:
+            secretKeyRef:
+               key: MONGO_INITDB_ROOT_PASSWORD
+               name: mongodb-secret  
+         
