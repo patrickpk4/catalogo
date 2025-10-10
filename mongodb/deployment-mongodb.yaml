@@ -14,10 +14,34 @@ spec:
       containers:
       - name: mongodb-container
         image: mongo:4.4.0
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 10 
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          tcpSocket:
+            port: 27017
+          initialDelaySeconds: 10
+          failureThreshold: 5
+          periodSeconds: 30
+          timeoutSeconds: 10     
         resources:
+          requests:
+            memory: "128Mi"
+            cpu: "200m"
           limits:
             memory: "128Mi"
-            cpu: "500m"
+            cpu: "400m"
         ports:
         - containerPort: 27017
         envFrom:
