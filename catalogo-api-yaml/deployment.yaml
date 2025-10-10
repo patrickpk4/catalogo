@@ -24,9 +24,25 @@ spec:
         - containerPort: 443
           name: https 
         imagePullPolicy: Always
+        readinessProbe:
+         httpGet:
+           path: /read
+           port: 80
+           scheme: HTTP 
+         periodSeconds: 5
+         timeoutSeconds: 2
+         failureThreshold: 5  
+        livenessProbe:
+         httpGet:
+           path: /health
+           port: 80
+           scheme: HTTP
+         periodSeconds: 5
+         timeoutSeconds: 2
+         failureThreshold: 5 
         envFrom:
         - secretRef:
-           name: catalogo-secrete
+           name: catalogo-secret
         env: 
          - name: mongo_user
            valueFrom:
