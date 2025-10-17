@@ -1,8 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: mongodb-deployment
+  name: mongodb-statefulset
 spec:
+  serviceName: mongodb-service
+  replicas: 1
   selector:
     matchLabels:
       app: mongodb
@@ -14,6 +16,23 @@ spec:
       containers:
       - name: mongodb-container
         image: mongo:4.4.0
+        envFrom:
+        - secretRef:
+            name: mongodb-secret
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db   
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c 
+            - |
+              mongo --eval "db.adminCommand('ping')" || exit 1  
+          initialDelaySeconds: 30
+          failureThreshold: 5
+          periodSeconds: 5
+          timeoutSeconds: 10       
         readinessProbe:
           tcpSocket:
             port: 27017
@@ -22,29 +41,31 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 3
         livenessProbe:
-          tcpSocket:
-            port: 27017
-          initialDelaySeconds: 10 
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        startupProbe:
-          tcpSocket:
-            port: 27017
+          exec:
+            command:
+            - sh
+            - -c 
+            - |
+              mongo --eval "db.adminCommand('ping')" || exit 1  
           initialDelaySeconds: 10
           failureThreshold: 5
-          periodSeconds: 30
-          timeoutSeconds: 10     
+          periodSeconds: 5
+          timeoutSeconds: 10    
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "200m"
+            memory: "180Mi"
+            cpu: "150m"
           limits:
-            memory: "128Mi"
-            cpu: "400m"
+            memory: "256Mi"
+            cpu: "250m"
         ports:
         - containerPort: 27017
-        envFrom:
-        - secretRef:
-             name: mongodb-secret
-          
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data 
+    spec:
+      accessModes: ["ReadWriteOnce"]    
+      storageClassName: nfs-mongodb  
+      resources:
+        requests:
+          storage: 1Gi

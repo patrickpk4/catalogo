@@ -11,16 +11,27 @@ spec:
       labels:
         app: api
     spec:
+      initContainers:
+       - name: connect-db
+         image: busybox
+         command:
+          - sh
+          - -c 
+          - |
+             until nc -z mongo-service.default.svc.cluster.local 27017; do
+             echo "Aguardando conexão com o MongoDB...";
+             sleep 3;
+             done   
       containers:
       - name: api-container
         image: patrickpk4/catalogo:v1.0
         resources:
           requests:
-            memory: "64Mi"
-            cpu: "200m"
+            memory: "128Mi"
+            cpu: "50m"
           limits:
             memory: "128Mi"
-            cpu: "500m"
+            cpu: "70m"
         ports:
         - containerPort: 80
           name: http 
