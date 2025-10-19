@@ -1,13 +1,13 @@
-# 🧩 Catálogo - Aplicação Kubernetes
+#  Catálogo - Aplicação Kubernetes
 
 Este projeto implementa uma aplicação de **Catálogo** com **MongoDB** como banco de dados, totalmente **containerizada e orquestrada com Kubernetes**.  
 A arquitetura foi projetada para demonstrar **boas práticas de resiliência, escalabilidade e persistência de dados** em ambiente Kubernetes.
 
 ---
 
-## 📋 Arquitetura
+##  Arquitetura
 
-### 🧱 Componentes
+###  Componentes
 
 | Componente | Descrição |
 |-------------|------------|
@@ -17,7 +17,7 @@ A arquitetura foi projetada para demonstrar **boas práticas de resiliência, es
 
 ---
 
-## ⚙️ Serviços Kubernetes
+##  Serviços Kubernetes
 
 | Serviço | Tipo | Porta(s) | Função |
 |----------|------|-----------|--------|
@@ -26,9 +26,9 @@ A arquitetura foi projetada para demonstrar **boas práticas de resiliência, es
 
 ---
 
-## 🚀 Deploy
+##  Deploy
 
-### ✅ Pré-requisitos
+###  Pré-requisitos
 
 - Cluster Kubernetes funcional  
 - Servidor NFS configurado em `192.168.1.16` com export `/export`  
@@ -37,34 +37,34 @@ A arquitetura foi projetada para demonstrar **boas práticas de resiliência, es
 
 ---
 
-### 🪄 Etapas de Deploy
+###  Etapas de Deploy
 
 ```bash
-# 1️⃣ Criar Secrets
+#  Criar Secrets
 kubectl apply -f mongodb-secret.yaml
 kubectl apply -f catalogo-secret.yaml
 
-# 2️⃣ Criar StorageClass NFS
+#  Criar StorageClass NFS
 kubectl apply -f storage-class-mongodb.yaml
 
-# 3️⃣ Deploy do MongoDB
+#  Deploy do MongoDB
 kubectl apply -f deployment-mongodb.yaml
 kubectl apply -f service.yaml  # mongo-service
 
-# 4️⃣ Deploy da API
+#  Deploy da API
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml  # api-service
 
-# 5️⃣ Configurar Auto-scaling
+#  Configurar Auto-scaling
 kubectl apply -f autoscaling-api.yaml
 kubectl apply -f hpa-mongodb.yaml
 ```
 
 ---
 
-## 🔧 Configuração
+##  Configuração
 
-### 🧩 Variáveis de Ambiente
+###  Variáveis de Ambiente
 
 **Secret do MongoDB (`mongodb-secret.yaml`):**
 | Variável | Valor |
@@ -81,7 +81,7 @@ kubectl apply -f hpa-mongodb.yaml
 
 ---
 
-## 🩺 Probes de Saúde
+##  Probes de Saúde
 
 | Tipo | Local | Verificação |
 |------|--------|--------------|
@@ -93,7 +93,7 @@ kubectl apply -f hpa-mongodb.yaml
 
 ---
 
-## 📊 Auto-scaling
+##  Auto-scaling
 
 | Recurso | Tipo | Mínimo | Máximo | Métricas |
 |----------|------|---------|---------|-----------|
@@ -102,7 +102,7 @@ kubectl apply -f hpa-mongodb.yaml
 
 ---
 
-## 💾 Persistência
+##  Persistência
 
 | Recurso | Valor |
 |----------|--------|
@@ -113,9 +113,9 @@ kubectl apply -f hpa-mongodb.yaml
 
 ---
 
-## 🔍 Monitoramento e Logs
+##  Monitoramento e Logs
 
-### 🧭 Verificar Status
+###  Verificar Status
 
 ```bash
 kubectl get pods
@@ -124,7 +124,7 @@ kubectl get pvc
 kubectl get hpa
 ```
 
-### 🪵 Logs
+###  Logs
 
 ```bash
 # Logs da API
@@ -136,16 +136,16 @@ kubectl logs statefulset/mongodb-statefulset
 
 ---
 
-## 🛠️ Desenvolvimento
+##  Desenvolvimento
 
-### 🏗️ Build e Push da Imagem
+###  Build e Push da Imagem
 
 ```bash
 docker build -t patrickpk4/catalogo:v1.0 .
 docker push patrickpk4/catalogo:v1.0
 ```
 
-### 🔁 Atualizar Deployment
+###  Atualizar Deployment
 
 ```bash
 kubectl rollout restart deployment/api-deployment
@@ -153,7 +153,7 @@ kubectl rollout restart deployment/api-deployment
 
 ---
 
-## 🧠 Notas Técnicas
+##  Notas Técnicas
 
 - O **initContainer** da API aguarda o MongoDB estar acessível antes do start.  
 - O **MongoDB** é executado como **StatefulSet** para garantir identidade estável.  
@@ -162,7 +162,7 @@ kubectl rollout restart deployment/api-deployment
 
 ---
 
-## 🔒 Segurança
+##  Segurança
 
 - Credenciais armazenadas em **Secrets codificados em Base64**  
 - **Resource Limits** definidos para evitar sobrecarga de recursos  
@@ -170,7 +170,7 @@ kubectl rollout restart deployment/api-deployment
 
 ---
 
-## ✍️ Autor
+##  Autor
 
 **Patrick Amorim**  
 Projeto de estudo em **Kubernetes**, **MongoDB** e **.NET Core**, com foco em arquitetura resiliente e escalável.
