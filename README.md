@@ -7,7 +7,6 @@ Uma aplicação de cadastro implementada em **Kubernetes** com **MongoDB** e **.
 
 ## Arquitetura
 
-![Diagrama da Arquitetura](A_diagram_displays_the_architecture_of_a_Kubernete.png)
 
 A aplicação é dividida em dois namespaces:
 
