@@ -1,176 +1,244 @@
-# 🧩 Catálogo - Aplicação Kubernetes
 
-Este projeto implementa uma aplicação de **Catálogo** com **MongoDB** como banco de dados, totalmente **containerizada e orquestrada com Kubernetes**.  
-A arquitetura foi projetada para demonstrar **boas práticas de resiliência, escalabilidade e persistência de dados** em ambiente Kubernetes.
+# Kubernetes Catálogo App - MongoDB & .NET Core
 
----
-
-## 📋 Arquitetura
-
-### 🧱 Componentes
-
-| Componente | Descrição |
-|-------------|------------|
-| **API Backend** | Aplicação .NET Core com endpoints REST (imagem `patrickpk4/catalogo:v1.0`) |
-| **MongoDB** | Banco de dados NoSQL para armazenamento |
-| **NFS Server** | Armazenamento compartilhado para persistência de dados |
+Uma aplicação completa de catálogo implementada em **Kubernetes** com **MongoDB** e **.NET Core**, demonstrando boas práticas de orquestração de containers, auto-escalonamento e persistência de dados.
 
 ---
 
-## ⚙️ Serviços Kubernetes
+## Arquitetura
 
-| Serviço | Tipo | Porta(s) | Função |
-|----------|------|-----------|--------|
-| `api-service` | NodePort | 80 / 443 | Exposição externa da aplicação |
-| `mongo-service` | Headless | 27017 | Comunicação interna com o banco de dados |
+![Diagrama da Arquitetura](A_diagram_displays_the_architecture_of_a_Kubernete.png)
 
----
+A aplicação é dividida em dois namespaces:
 
-## 🚀 Deploy
+- **api-app**: Contém a API .NET Core, seus Secrets, ServiceAccount, Role, RoleBinding e HPA.
+- **data-base**: Contém o MongoDB como StatefulSet, seu Secret, Headless Service, Role, RoleBinding e HPA.
 
-### ✅ Pré-requisitos
-
-- Cluster Kubernetes funcional  
-- Servidor NFS configurado em `192.168.1.16` com export `/export`  
-- Helm instalado e provisionador NFS configurado (`nfs-subdir-external-provisioner`)  
-- Imagem Docker disponível no registro: `patrickpk4/catalogo:v1.0`  
+A comunicação entre os namespaces é controlada por uma **NetworkPolicy**.
 
 ---
 
-### 🪄 Etapas de Deploy
+## Estrutura do Projeto
 
-```bash
-# 1️⃣ Criar Secrets
-kubectl apply -f mongodb-secret.yaml
-kubectl apply -f catalogo-secret.yaml
-
-# 2️⃣ Criar StorageClass NFS
-kubectl apply -f storage-class-mongodb.yaml
-
-# 3️⃣ Deploy do MongoDB
-kubectl apply -f deployment-mongodb.yaml
-kubectl apply -f service.yaml  # mongo-service
-
-# 4️⃣ Deploy da API
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml  # api-service
-
-# 5️⃣ Configurar Auto-scaling
-kubectl apply -f autoscaling-api.yaml
-kubectl apply -f hpa-mongodb.yaml
+```
+catalogo-kubernetes/
+├── api-app/
+│   ├── catalogo.yaml
+│   ├── service-catalogo.yaml
+│   ├── secret-catalogo.yaml
+│   ├── serviceaccount-catalogo.yaml
+│   ├── role-catalogo.yaml
+│   ├── rolebinding-catalogo.yaml
+│   ├── hpa-catalogo.yaml
+│   └── networkpolicy-catalogo.yaml
+├── data-base/
+│   ├── mongodb.yaml
+│   ├── service-mongodb.yaml
+│   ├── secret-mongodb.yaml
+│   ├── serviceaccount-mongodb.yaml
+│   ├── role-mongodb.yaml
+│   ├── rolebinding-mongodb.yaml
+│   ├── hpa-mongodb.yaml
+│   └── networkpolicy-mongodb.yaml
+├── storage/
+│   └── storage-class-mongodb.yaml
+└── README.md
 ```
 
 ---
 
-## 🔧 Configuração
+## Componentes Principais
 
-### 🧩 Variáveis de Ambiente
-
-**Secret do MongoDB (`mongodb-secret.yaml`):**
-| Variável | Valor |
-|-----------|--------|
-| `MONGO_INITDB_ROOT_USERNAME` | `mongouser` |
-| `MONGO_INITDB_ROOT_PASSWORD` | `mongopwd` |
-
-**Secret da Aplicação (`catalogo-secret.yaml`):**
-| Variável | Valor |
-|-----------|--------|
-| `Mongo__host` | `mongo-service` |
-| `Mongo__port` | `27017` |
-| `Mongo__DataBase` | `admin` |
+| Componente | Tecnologia | Função |
+|-------------|-------------|--------|
+| **API Backend** | .NET Core 6.0 | API REST do catálogo |
+| **Database** | MongoDB 4.4 | Armazenamento de dados |
+| **Orquestração** | Kubernetes | Orquestração de containers |
+| **Armazenamento** | NFS | Persistência de dados |
+| **Networking** | Calico | Network policies |
 
 ---
 
-## 🩺 Probes de Saúde
+## Serviços
 
-| Tipo | Local | Verificação |
-|------|--------|--------------|
-| **StartupProbe (MongoDB)** | Container MongoDB | `mongo --eval "db.adminCommand('ping')"` |
-| **ReadinessProbe (MongoDB)** | Porta TCP 27017 | Conexão disponível |
-| **LivenessProbe (MongoDB)** | Container MongoDB | `mongo --eval "db.adminCommand('ping')"` |
-| **ReadinessProbe (API)** | Endpoint `/read` | Porta 80 |
-| **LivenessProbe (API)** | Endpoint `/health` | Porta 80 |
+| Serviço | Tipo | Porta | Descrição |
+|----------|------|-------|------------|
+| **api-service** | NodePort | 80/443 | Exposição externa da aplicação |
+| **mongo-service** | Headless | 27017 | Comunicação interna MongoDB |
 
 ---
 
-## 📊 Auto-scaling
+## Deploy Passo a Passo
 
-| Recurso | Tipo | Mínimo | Máximo | Métricas |
-|----------|------|---------|---------|-----------|
-| **API Deployment** | Deployment | 1 Pod | 10 Pods | CPU 50% / Memória 50% |
-| **MongoDB StatefulSet** | StatefulSet | 1 Pod | 10 Pods | CPU 38% / Memória 70% |
-
----
-
-## 💾 Persistência
-
-| Recurso | Valor |
-|----------|--------|
-| **StorageClass** | `nfs-mongodb` |
-| **Provisionador** | `cluster.local/nfs-new-nfs-subdir-external-provisioner` |
-| **Servidor NFS** | `192.168.1.16:/export` |
-| **Política** | `Retain` (dados preservados após deleção do PVC) |
-
----
-
-## 🔍 Monitoramento e Logs
-
-### 🧭 Verificar Status
-
+### 1. Criar Namespaces
 ```bash
-kubectl get pods
-kubectl get services
-kubectl get pvc
-kubectl get hpa
+kubectl create namespace api-app
+kubectl create namespace data-base
 ```
 
-### 🪵 Logs
-
+### 2. Deploy do MongoDB
 ```bash
-# Logs da API
-kubectl logs deployment/api-deployment
+kubectl apply -f data-base/secret-mongodb.yaml
+kubectl apply -f storage/storage-class-mongodb.yaml
+kubectl apply -f data-base/mongodb.yaml
+kubectl apply -f data-base/service-mongodb.yaml
+kubectl apply -f data-base/serviceaccount-mongodb.yaml
+kubectl apply -f data-base/role-mongodb.yaml
+kubectl apply -f data-base/rolebinding-mongodb.yaml
+```
 
-# Logs do MongoDB
-kubectl logs statefulset/mongodb-statefulset
+### 3. Deploy da API Catálogo
+```bash
+kubectl apply -f api-app/secret-catalogo.yaml
+kubectl apply -f api-app/catalogo.yaml
+kubectl apply -f api-app/service-catalogo.yaml
+kubectl apply -f api-app/serviceaccount-catalogo.yaml
+kubectl apply -f api-app/role-catalogo.yaml
+kubectl apply -f api-app/rolebinding-catalogo.yaml
+```
+
+### 4. Configurar Auto-scaling
+```bash
+kubectl apply -f api-app/hpa-catalogo.yaml
+kubectl apply -f data-base/hpa-mongodb.yaml
+```
+
+### 5. Aplicar Network Policies
+```bash
+kubectl apply -f api-app/networkpolicy-catalogo.yaml
+kubectl apply -f data-base/networkpolicy-mongodb.yaml
 ```
 
 ---
 
-## 🛠️ Desenvolvimento
+## Variáveis de Ambiente
 
-### 🏗️ Build e Push da Imagem
-
-```bash
-docker build -t patrickpk4/catalogo:v1.0 .
-docker push patrickpk4/catalogo:v1.0
+**Secret do MongoDB:**
+```yaml
+MONGO_INITDB_ROOT_USERNAME: mongouser
+MONGO_INITDB_ROOT_PASSWORD: mongopwd
 ```
 
-### 🔁 Atualizar Deployment
-
-```bash
-kubectl rollout restart deployment/api-deployment
+**Secret da Aplicação:**
+```yaml
+Mongo__host: mongo-service.data-base.svc.cluster.local
+Mongo__port: 27017
+Mongo__DataBase: admin
 ```
 
 ---
 
-## 🧠 Notas Técnicas
+## Resource Limits
 
-- O **initContainer** da API aguarda o MongoDB estar acessível antes do start.  
-- O **MongoDB** é executado como **StatefulSet** para garantir identidade estável.  
-- O **NFS** assegura persistência entre reinicializações.  
-- O **HPA** aplica escalabilidade automática com base no uso de CPU e memória.  
+```yaml
+# API
+requests:
+  memory: 128Mi
+  cpu: 50m
+limits:
+  memory: 128Mi
+  cpu: 70m
+
+# MongoDB
+requests:
+  memory: 180Mi
+  cpu: 150m
+limits:
+  memory: 256Mi
+  cpu: 250m
+```
 
 ---
 
-## 🔒 Segurança
+## Health Checks
 
-- Credenciais armazenadas em **Secrets codificados em Base64**  
-- **Resource Limits** definidos para evitar sobrecarga de recursos  
-- **Probes configuradas** garantem disponibilidade contínua da aplicação  
+**MongoDB**
+- Startup: `mongo --eval "db.adminCommand('ping')"`
+- Readiness: TCP socket 27017
+- Liveness: `mongo --eval "db.adminCommand('ping')"`
+
+**API**
+- Readiness: HTTP GET `/read`
+- Liveness: HTTP GET `/health`
 
 ---
 
-## ✍️ Autor
+## Segurança
+
+**RBAC**
+- Service Accounts específicos por namespace  
+- Roles com princípio do menor privilégio  
+- ClusterRoles para acesso cross-namespace  
+
+**Network Policies**
+- Isolamento entre namespaces  
+- Acesso restrito à porta do MongoDB  
+- Permissão para DNS resolution  
+
+**Secrets**
+- Credenciais em Base64  
+- Namespace isolation  
+- Controle de acesso via RBAC  
+
+---
+
+## Persistência
+
+**StorageClass NFS**
+```yaml
+provisioner: cluster.local/nfs-subdir-external-provisioner
+server: 192.168.1.21
+path: /export
+reclaimPolicy: Retain
+```
+
+---
+
+## Monitoramento
+
+```bash
+kubectl get pods -n api-app
+kubectl get pods -n data-base
+kubectl logs -n api-app -l app=api
+kubectl logs -n data-base -l app=mongodb
+kubectl get hpa -A
+```
+
+---
+
+## Troubleshooting
+
+```bash
+kubectl get events -A --sort-by='.lastTimestamp'
+kubectl run test-connection -n api-app --image=busybox --rm -it -- sh
+kubectl auth can-i get secrets --as=system:serviceaccount:api-app:catalogo-service-account
+kubectl rollout restart deployment/api-deployment -n api-app
+```
+
+---
+
+## Boas Práticas Implementadas
+
+✅ Multi-namespace para isolamento  
+✅ RBAC com princípio do menor privilégio  
+✅ Health checks completos  
+✅ Auto-scaling horizontal  
+✅ Persistência com NFS  
+✅ Network policies para segurança  
+✅ Resource limits definidos  
+✅ Secrets management adequado  
+✅ StatefulSet para banco de dados  
+✅ Probes para resiliência  
+
+---
+
+## Autor
 
 **Patrick Amorim**  
-Projeto de estudo em **Kubernetes**, **MongoDB** e **.NET Core**, com foco em arquitetura resiliente e escalável.
+Projeto de estudo em Kubernetes, MongoDB e .NET Core  
+GitHub: [@patrickpk4](https://github.com/patrickpk4)
+
+---
+
+## Licença
+Projeto de estudo e uso educacional.
