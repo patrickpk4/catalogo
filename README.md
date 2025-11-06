@@ -1,5 +1,5 @@
 
-# Kubernetes Catálogo App - MongoDB & .NET Core
+# Kubernetes Cadastro App - MongoDB & .NET Core
 
 Uma aplicação de cadastro implementada em **Kubernetes** com **MongoDB** e **.NET Core**, demonstrando boas práticas de orquestração de containers, auto-escalonamento e persistência de dados.
 
